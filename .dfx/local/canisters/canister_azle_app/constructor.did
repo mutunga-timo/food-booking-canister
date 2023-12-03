@@ -1,0 +1,22 @@
+type FoodBooking = record {
+  id : text;
+  deliveryAddress : text;
+  createdAt : nat64;
+  updatedAt : opt nat64;
+  quantity : float64;
+  foodName : text;
+};
+type FoodBookingPayload = record {
+  deliveryAddress : text;
+  quantity : float64;
+  foodName : text;
+};
+type _AzleResult = variant { Ok : FoodBooking; Err : text };
+type _AzleResult_1 = variant { Ok : vec FoodBooking; Err : text };
+service : () -> {
+  addFoodBooking : (FoodBookingPayload) -> (_AzleResult);
+  deleteFoodBooking : (text) -> (_AzleResult);
+  getFoodBooking : (text) -> (_AzleResult) query;
+  getFoodBookings : () -> (_AzleResult_1) query;
+  updateFoodBooking : (text, FoodBookingPayload) -> (_AzleResult);
+}
