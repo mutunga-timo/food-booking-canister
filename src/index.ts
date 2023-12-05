@@ -1,6 +1,7 @@
 import { $query, $update, Record, StableBTreeMap, Vec, match, Result, nat64, ic, Opt } from 'azle';
 import { v4 as uuidv4 } from 'uuid';
 
+// Define the type for a food booking
 type FoodBooking = Record<{
     id: string;
     foodName: string;
@@ -10,14 +11,20 @@ type FoodBooking = Record<{
     updatedAt: Opt<nat64>;
 }>
 
+// Define the type for the payload used in creating or updating a food booking
 type FoodBookingPayload = Record<{
     foodName: string;
     quantity: number;
     deliveryAddress: string;
 }>
 
+// Create a storage for food bookings
 const foodBookingStorage = new StableBTreeMap<string, FoodBooking>(0, 44, 1024);
 
+/**
+ * Get all food bookings.
+ * @returns Result<Vec<FoodBooking>, string> - A Result containing a Vec of food bookings or an error message.
+ */
 $query;
 export function getFoodBookings(): Result<Vec<FoodBooking>, string> {
     try {
@@ -27,6 +34,11 @@ export function getFoodBookings(): Result<Vec<FoodBooking>, string> {
     }
 }
 
+/**
+ * Get a specific food booking by ID.
+ * @param id - The ID of the food booking to retrieve.
+ * @returns Result<FoodBooking, string> - A Result containing the requested food booking or an error message.
+ */
 $query;
 export function getFoodBooking(id: string): Result<FoodBooking, string> {
     try {
@@ -38,6 +50,12 @@ export function getFoodBooking(id: string): Result<FoodBooking, string> {
         return Result.Err<FoodBooking, string>(`Error getting food booking: ${(error as Error).message}`);
     }
 }
+
+/**
+ * Add a new food booking.
+ * @param payload - The payload containing food booking details.
+ * @returns Result<FoodBooking, string> - A Result containing the newly added food booking or an error message.
+ */
 $update;
 export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking, string> {
     try {
@@ -46,6 +64,7 @@ export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking,
             return Result.Err<FoodBooking, string>('Invalid input. Please provide all required fields.');
         }
 
+        // Check for duplicate food name
         const existingBooking = foodBookingStorage
             .values()
             .find((booking) => booking.foodName.toLowerCase() === payload.foodName.toLowerCase());
@@ -54,6 +73,7 @@ export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking,
             return Result.Err<FoodBooking, string>('Food name must be unique.');
         }
 
+        // Validate quantity
         const quantity = Number(payload.quantity);
         if (isNaN(quantity) || quantity <= 0) {
             return Result.Err<FoodBooking, string>('Quantity must be a positive integer.');
@@ -69,6 +89,12 @@ export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking,
     }
 }
 
+/**
+ * Update an existing food booking by ID.
+ * @param id - The ID of the food booking to update.
+ * @param payload - The payload containing updated food booking details.
+ * @returns Result<FoodBooking, string> - A Result containing the updated food booking or an error message.
+ */
 $update;
 export function updateFoodBooking(id: string, payload: FoodBookingPayload): Result<FoodBooking, string> {
     try {
@@ -77,6 +103,7 @@ export function updateFoodBooking(id: string, payload: FoodBookingPayload): Resu
             return Result.Err<FoodBooking, string>('Invalid input. Please provide all required fields.');
         }
 
+        // Check for duplicate food name
         const existingBooking = foodBookingStorage
             .values()
             .find(
@@ -88,6 +115,7 @@ export function updateFoodBooking(id: string, payload: FoodBookingPayload): Resu
             return Result.Err<FoodBooking, string>('Food name must be unique.');
         }
 
+        // Validate quantity
         const quantity = Number(payload.quantity);
         if (isNaN(quantity) || quantity <= 0) {
             return Result.Err<FoodBooking, string>('Quantity must be a positive integer.');
@@ -107,6 +135,11 @@ export function updateFoodBooking(id: string, payload: FoodBookingPayload): Resu
     }
 }
 
+/**
+ * Delete a food booking by ID.
+ * @param id - The ID of the food booking to delete.
+ * @returns Result<FoodBooking, string> - A Result containing the deleted food booking or an error message.
+ */
 $update;
 export function deleteFoodBooking(id: string): Result<FoodBooking, string> {
     try {
@@ -119,6 +152,11 @@ export function deleteFoodBooking(id: string): Result<FoodBooking, string> {
     }
 }
 
+/**
+ * Search for food bookings based on a keyword.
+ * @param keyword - The keyword to search for in food names and delivery addresses.
+ * @returns Result<Vec<FoodBooking>, string> - A Result containing a Vec of filtered food bookings or an error message.
+ */
 $query;
 export function searchFoodBookings(keyword: string): Result<Vec<FoodBooking>, string> {
     try {
@@ -135,6 +173,10 @@ export function searchFoodBookings(keyword: string): Result<Vec<FoodBooking>, st
     }
 }
 
+/**
+ * Count the total number of food bookings.
+ * @returns Result<number, string> - A Result containing the count of food bookings or an error message.
+ */
 $query;
 export function countFoodBookings(): Result<number, string> {
     try {
@@ -148,6 +190,13 @@ export function countFoodBookings(): Result<number, string> {
         return Result.Err<number, string>(`Error counting food bookings: ${(error as Error).message}`);
     }
 }
+
+/**
+ * Get a paginated list of food bookings.
+ * @param page - The page number.
+ * @param pageSize - The number of items per page.
+ * @returns Result<Vec<FoodBooking>, string> - A Result containing a Vec of paginated food bookings or an error message.
+ */
 $query;
 export function getFoodBookingsPaginated(page: number, pageSize: number): Result<Vec<FoodBooking>, string> {
     try {
