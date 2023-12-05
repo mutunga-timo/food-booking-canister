@@ -93,7 +93,7 @@ The Food Booking System is a JavaScript implementation that utilizes the Azle li
    ```bash
    npm start
    ```
-   4. Deploy the application:
+4. Deploy the application:
 
    ```bash
    npm deploy
