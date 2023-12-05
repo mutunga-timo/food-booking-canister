@@ -24,6 +24,11 @@ export const idlFactory = ({ IDL }) => {
     'deleteFoodBooking' : IDL.Func([IDL.Text], [_AzleResult], []),
     'getFoodBooking' : IDL.Func([IDL.Text], [_AzleResult], ['query']),
     'getFoodBookings' : IDL.Func([], [_AzleResult_2], ['query']),
+    'getFoodBookingsPaginated' : IDL.Func(
+        [IDL.Float64, IDL.Float64],
+        [_AzleResult_2],
+        ['query'],
+      ),
     'searchFoodBookings' : IDL.Func([IDL.Text], [_AzleResult_2], ['query']),
     'updateFoodBooking' : IDL.Func(
         [IDL.Text, FoodBookingPayload],

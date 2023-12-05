@@ -26,6 +26,7 @@ export interface _SERVICE {
   'deleteFoodBooking' : ActorMethod<[string], _AzleResult>,
   'getFoodBooking' : ActorMethod<[string], _AzleResult>,
   'getFoodBookings' : ActorMethod<[], _AzleResult_2>,
+  'getFoodBookingsPaginated' : ActorMethod<[number, number], _AzleResult_2>,
   'searchFoodBookings' : ActorMethod<[string], _AzleResult_2>,
   'updateFoodBooking' : ActorMethod<[string, FoodBookingPayload], _AzleResult>,
 }

@@ -11,7 +11,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.countFoodBookings = exports.searchFoodBookings = exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
+exports.getFoodBookingsPaginated = exports.countFoodBookings = exports.searchFoodBookings = exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
 function _defineProperty(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -1164,67 +1164,122 @@ var v4_default = v4;
 // src/index.ts
 var foodBookingStorage = new StableBTreeMap(0, 44, 1024);
 function getFoodBookings() {
-    return Result.Ok(foodBookingStorage.values());
+    try {
+        return Result.Ok(foodBookingStorage.values());
+    } catch (error) {
+        return Result.Err(`Error getting food bookings: ${error.message}`);
+    }
 }
 exports.getFoodBookings = getFoodBookings;
 function getFoodBooking(id) {
-    return match(foodBookingStorage.get(id), {
-        Some: (foodBooking)=>Result.Ok(foodBooking)
-        ,
-        None: ()=>Result.Err(`A food booking with id=${id} not found`)
-    });
+    try {
+        return match(foodBookingStorage.get(id), {
+            Some: (foodBooking)=>Result.Ok(foodBooking)
+            ,
+            None: ()=>Result.Err(`A food booking with id=${id} not found`)
+        });
+    } catch (error) {
+        return Result.Err(`Error getting food booking: ${error.message}`);
+    }
 }
 exports.getFoodBooking = getFoodBooking;
 function addFoodBooking(payload) {
-    if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
-        return Result.Err("Invalid input. Please provide all required fields.");
+    try {
+        if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+            return Result.Err("Invalid input. Please provide all required fields.");
+        }
+        const existingBooking = foodBookingStorage.values().find((booking)=>booking.foodName.toLowerCase() === payload.foodName.toLowerCase()
+        );
+        if (existingBooking) {
+            return Result.Err("Food name must be unique.");
+        }
+        const quantity = Number(payload.quantity);
+        if (isNaN(quantity) || quantity <= 0) {
+            return Result.Err("Quantity must be a positive integer.");
+        }
+        const foodBooking = _objectSpread({
+            id: v4_default(),
+            createdAt: ic.time(),
+            updatedAt: Opt.None
+        }, payload);
+        foodBookingStorage.insert(foodBooking.id, foodBooking);
+        return Result.Ok(foodBooking);
+    } catch (error) {
+        return Result.Err(`Error adding food booking: ${error.message}`);
     }
-    const quantity = Number(payload.quantity);
-    if (isNaN(quantity) || quantity <= 0) {
-        return Result.Err("Quantity must be a positive integer.");
-    }
-    const foodBooking = _objectSpread({
-        id: v4_default(),
-        createdAt: ic.time(),
-        updatedAt: Opt.None
-    }, payload);
-    foodBookingStorage.insert(foodBooking.id, foodBooking);
-    return Result.Ok(foodBooking);
 }
 exports.addFoodBooking = addFoodBooking;
 function updateFoodBooking(id, payload) {
-    return match(foodBookingStorage.get(id), {
-        Some: (foodBooking)=>{
-            const updatedFoodBooking = _objectSpread({}, foodBooking, payload, {
-                updatedAt: Opt.Some(ic.time())
-            });
-            foodBookingStorage.insert(foodBooking.id, updatedFoodBooking);
-            return Result.Ok(updatedFoodBooking);
-        },
-        None: ()=>Result.Err(`Couldn't update a food booking with id=${id}. Food booking not found`)
-    });
+    try {
+        if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+            return Result.Err("Invalid input. Please provide all required fields.");
+        }
+        const existingBooking = foodBookingStorage.values().find((booking)=>booking.foodName.toLowerCase() === payload.foodName.toLowerCase() && booking.id !== id
+        );
+        if (existingBooking) {
+            return Result.Err("Food name must be unique.");
+        }
+        const quantity = Number(payload.quantity);
+        if (isNaN(quantity) || quantity <= 0) {
+            return Result.Err("Quantity must be a positive integer.");
+        }
+        return match(foodBookingStorage.get(id), {
+            Some: (foodBooking)=>{
+                const updatedFoodBooking = _objectSpread({}, foodBooking, payload, {
+                    updatedAt: Opt.Some(ic.time())
+                });
+                foodBookingStorage.insert(foodBooking.id, updatedFoodBooking);
+                return Result.Ok(updatedFoodBooking);
+            },
+            None: ()=>Result.Err(`Couldn't update a food booking with id=${id}. Food booking not found`)
+        });
+    } catch (error) {
+        return Result.Err(`Error updating food booking: ${error.message}`);
+    }
 }
 exports.updateFoodBooking = updateFoodBooking;
 function deleteFoodBooking(id) {
-    return match(foodBookingStorage.remove(id), {
-        Some: (deletedFoodBooking)=>Result.Ok(deletedFoodBooking)
-        ,
-        None: ()=>Result.Err(`Couldn't delete a food booking with id=${id}. Food booking not found.`)
-    });
+    try {
+        return match(foodBookingStorage.remove(id), {
+            Some: (deletedFoodBooking)=>Result.Ok(deletedFoodBooking)
+            ,
+            None: ()=>Result.Err(`Couldn't delete a food booking with id=${id}. Food booking not found.`)
+        });
+    } catch (error) {
+        return Result.Err(`Error deleting food booking: ${error.message}`);
+    }
 }
 exports.deleteFoodBooking = deleteFoodBooking;
 function searchFoodBookings(keyword) {
-    const filteredBookings = foodBookingStorage.values().filter((booking)=>booking.foodName.toLowerCase().includes(keyword.toLowerCase()) || booking.deliveryAddress.toLowerCase().includes(keyword.toLowerCase())
-    );
-    return Result.Ok(filteredBookings);
+    try {
+        const filteredBookings = foodBookingStorage.values().filter((booking)=>booking.foodName.toLowerCase().includes(keyword.toLowerCase()) || booking.deliveryAddress.toLowerCase().includes(keyword.toLowerCase())
+        );
+        return Result.Ok(filteredBookings);
+    } catch (error) {
+        return Result.Err(`Error searching food bookings: ${error.message}`);
+    }
 }
 exports.searchFoodBookings = searchFoodBookings;
 function countFoodBookings() {
-    const count = foodBookingStorage.len();
-    const countAsNumber = Number(count);
-    return Result.Ok(countAsNumber);
+    try {
+        const count = foodBookingStorage.len();
+        const countAsNumber = Number(count);
+        return Result.Ok(countAsNumber);
+    } catch (error) {
+        return Result.Err(`Error counting food bookings: ${error.message}`);
+    }
 }
 exports.countFoodBookings = countFoodBookings;
+function getFoodBookingsPaginated(page, pageSize) {
+    try {
+        const startIdx = (page - 1) * pageSize;
+        const paginatedBookings = foodBookingStorage.values().slice(startIdx, startIdx + pageSize);
+        return Result.Ok(paginatedBookings);
+    } catch (error) {
+        return Result.Err(`Error getting paginated food bookings: ${error.message}`);
+    }
+}
+exports.getFoodBookingsPaginated = getFoodBookingsPaginated;
 globalThis.crypto = {
     getRandomValues: ()=>{
         let array = new Uint8Array(32);
