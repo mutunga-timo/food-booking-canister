@@ -11,7 +11,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
+exports.countFoodBookings = exports.searchFoodBookings = exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
 function _defineProperty(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -1176,6 +1176,13 @@ function getFoodBooking(id) {
 }
 exports.getFoodBooking = getFoodBooking;
 function addFoodBooking(payload) {
+    if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+        return Result.Err("Invalid input. Please provide all required fields.");
+    }
+    const quantity = Number(payload.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+        return Result.Err("Quantity must be a positive integer.");
+    }
     const foodBooking = _objectSpread({
         id: v4_default(),
         createdAt: ic.time(),
@@ -1206,6 +1213,18 @@ function deleteFoodBooking(id) {
     });
 }
 exports.deleteFoodBooking = deleteFoodBooking;
+function searchFoodBookings(keyword) {
+    const filteredBookings = foodBookingStorage.values().filter((booking)=>booking.foodName.toLowerCase().includes(keyword.toLowerCase()) || booking.deliveryAddress.toLowerCase().includes(keyword.toLowerCase())
+    );
+    return Result.Ok(filteredBookings);
+}
+exports.searchFoodBookings = searchFoodBookings;
+function countFoodBookings() {
+    const count = foodBookingStorage.len();
+    const countAsNumber = Number(count);
+    return Result.Ok(countAsNumber);
+}
+exports.countFoodBookings = countFoodBookings;
 globalThis.crypto = {
     getRandomValues: ()=>{
         let array = new Uint8Array(32);

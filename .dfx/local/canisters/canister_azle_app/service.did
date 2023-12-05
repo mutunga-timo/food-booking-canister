@@ -12,11 +12,14 @@ type FoodBookingPayload = record {
   foodName : text;
 };
 type _AzleResult = variant { Ok : FoodBooking; Err : text };
-type _AzleResult_1 = variant { Ok : vec FoodBooking; Err : text };
+type _AzleResult_1 = variant { Ok : float64; Err : text };
+type _AzleResult_2 = variant { Ok : vec FoodBooking; Err : text };
 service : {
   addFoodBooking : (FoodBookingPayload) -> (_AzleResult);
+  countFoodBookings : () -> (_AzleResult_1) query;
   deleteFoodBooking : (text) -> (_AzleResult);
   getFoodBooking : (text) -> (_AzleResult) query;
-  getFoodBookings : () -> (_AzleResult_1) query;
+  getFoodBookings : () -> (_AzleResult_2) query;
+  searchFoodBookings : (text) -> (_AzleResult_2) query;
   updateFoodBooking : (text, FoodBookingPayload) -> (_AzleResult);
 }

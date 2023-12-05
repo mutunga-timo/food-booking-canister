@@ -33,8 +33,20 @@ export function getFoodBooking(id: string): Result<FoodBooking, string> {
 
 $update;
 export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking, string> {
+    // Validate input
+    if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+        return Result.Err<FoodBooking, string>('Invalid input. Please provide all required fields.');
+    }
+
+    const quantity = Number(payload.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+        return Result.Err<FoodBooking, string>('Quantity must be a positive integer.');
+    }
+
+    // Create and insert the food booking
     const foodBooking: FoodBooking = { id: uuidv4(), createdAt: ic.time(), updatedAt: Opt.None, ...payload };
     foodBookingStorage.insert(foodBooking.id, foodBooking);
+    
     return Result.Ok(foodBooking);
 }
 
@@ -56,6 +68,26 @@ export function deleteFoodBooking(id: string): Result<FoodBooking, string> {
         Some: (deletedFoodBooking) => Result.Ok<FoodBooking, string>(deletedFoodBooking),
         None: () => Result.Err<FoodBooking, string>(`Couldn't delete a food booking with id=${id}. Food booking not found.`)
     });
+}
+$query;
+export function searchFoodBookings(keyword: string): Result<Vec<FoodBooking>, string> {
+    const filteredBookings = foodBookingStorage
+        .values()
+        .filter((booking) =>
+            booking.foodName.toLowerCase().includes(keyword.toLowerCase()) ||
+            booking.deliveryAddress.toLowerCase().includes(keyword.toLowerCase())
+        );
+
+    return Result.Ok(filteredBookings);
+}
+$query;
+export function countFoodBookings(): Result<number, string> {
+    const count = foodBookingStorage.len();
+
+    // Convert the bigint to number
+    const countAsNumber = Number(count);
+
+    return Result.Ok(countAsNumber);
 }
 
 // Workaround to make uuid package work with Azle

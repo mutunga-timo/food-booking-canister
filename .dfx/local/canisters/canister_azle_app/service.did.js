@@ -13,15 +13,18 @@ export const idlFactory = ({ IDL }) => {
     'foodName' : IDL.Text,
   });
   const _AzleResult = IDL.Variant({ 'Ok' : FoodBooking, 'Err' : IDL.Text });
-  const _AzleResult_1 = IDL.Variant({
+  const _AzleResult_1 = IDL.Variant({ 'Ok' : IDL.Float64, 'Err' : IDL.Text });
+  const _AzleResult_2 = IDL.Variant({
     'Ok' : IDL.Vec(FoodBooking),
     'Err' : IDL.Text,
   });
   return IDL.Service({
     'addFoodBooking' : IDL.Func([FoodBookingPayload], [_AzleResult], []),
+    'countFoodBookings' : IDL.Func([], [_AzleResult_1], ['query']),
     'deleteFoodBooking' : IDL.Func([IDL.Text], [_AzleResult], []),
     'getFoodBooking' : IDL.Func([IDL.Text], [_AzleResult], ['query']),
-    'getFoodBookings' : IDL.Func([], [_AzleResult_1], ['query']),
+    'getFoodBookings' : IDL.Func([], [_AzleResult_2], ['query']),
+    'searchFoodBookings' : IDL.Func([IDL.Text], [_AzleResult_2], ['query']),
     'updateFoodBooking' : IDL.Func(
         [IDL.Text, FoodBookingPayload],
         [_AzleResult],

@@ -16,12 +16,16 @@ export interface FoodBookingPayload {
 }
 export type _AzleResult = { 'Ok' : FoodBooking } |
   { 'Err' : string };
-export type _AzleResult_1 = { 'Ok' : Array<FoodBooking> } |
+export type _AzleResult_1 = { 'Ok' : number } |
+  { 'Err' : string };
+export type _AzleResult_2 = { 'Ok' : Array<FoodBooking> } |
   { 'Err' : string };
 export interface _SERVICE {
   'addFoodBooking' : ActorMethod<[FoodBookingPayload], _AzleResult>,
+  'countFoodBookings' : ActorMethod<[], _AzleResult_1>,
   'deleteFoodBooking' : ActorMethod<[string], _AzleResult>,
   'getFoodBooking' : ActorMethod<[string], _AzleResult>,
-  'getFoodBookings' : ActorMethod<[], _AzleResult_1>,
+  'getFoodBookings' : ActorMethod<[], _AzleResult_2>,
+  'searchFoodBookings' : ActorMethod<[string], _AzleResult_2>,
   'updateFoodBooking' : ActorMethod<[string, FoodBookingPayload], _AzleResult>,
 }
