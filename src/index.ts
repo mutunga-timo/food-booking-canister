@@ -21,6 +21,32 @@ type FoodBookingPayload = Record<{
 // Create a storage for food bookings
 const foodBookingStorage = new StableBTreeMap<string, FoodBooking>(0, 44, 1024);
 
+// New utility function for validation
+function isValidInput(payload: FoodBookingPayload): boolean {
+    return (
+        payload.foodName !== undefined &&
+        payload.quantity !== undefined &&
+        payload.deliveryAddress !== undefined
+    );
+}
+
+// New utility function for duplicate check
+function hasDuplicateFoodName(foodName: string, currentId?: string): boolean {
+    const existingBooking = foodBookingStorage
+        .values()
+        .find(
+            (booking) =>
+                booking.foodName.toLowerCase() === foodName.toLowerCase() && booking.id !== currentId
+        );
+
+    return existingBooking !== undefined;
+}
+
+// Existing utility function for quantity validation
+function isValidQuantity(quantity: number): boolean {
+    return !isNaN(quantity) && quantity > 0;
+}
+
 /**
  * Get all food bookings.
  * @returns Result<Vec<FoodBooking>, string> - A Result containing a Vec of food bookings or an error message.
@@ -44,7 +70,7 @@ export function getFoodBooking(id: string): Result<FoodBooking, string> {
     try {
         return match(foodBookingStorage.get(id), {
             Some: (foodBooking) => Result.Ok<FoodBooking, string>(foodBooking),
-            None: () => Result.Err<FoodBooking, string>(`A food booking with id=${id} not found`)
+            None: () => Result.Err<FoodBooking, string>(`Food booking with id=${id} not found`)
         });
     } catch (error: unknown) {
         return Result.Err<FoodBooking, string>(`Error getting food booking: ${(error as Error).message}`);
@@ -60,22 +86,18 @@ $update;
 export function addFoodBooking(payload: FoodBookingPayload): Result<FoodBooking, string> {
     try {
         // Validate input
-        if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+        if (!isValidInput(payload)) {
             return Result.Err<FoodBooking, string>('Invalid input. Please provide all required fields.');
         }
 
         // Check for duplicate food name
-        const existingBooking = foodBookingStorage
-            .values()
-            .find((booking) => booking.foodName.toLowerCase() === payload.foodName.toLowerCase());
-
-        if (existingBooking) {
+        if (hasDuplicateFoodName(payload.foodName)) {
             return Result.Err<FoodBooking, string>('Food name must be unique.');
         }
 
         // Validate quantity
         const quantity = Number(payload.quantity);
-        if (isNaN(quantity) || quantity <= 0) {
+        if (!isValidQuantity(quantity)) {
             return Result.Err<FoodBooking, string>('Quantity must be a positive integer.');
         }
 
@@ -99,25 +121,18 @@ $update;
 export function updateFoodBooking(id: string, payload: FoodBookingPayload): Result<FoodBooking, string> {
     try {
         // Validate input
-        if (!payload.foodName || !payload.quantity || !payload.deliveryAddress) {
+        if (!isValidInput(payload)) {
             return Result.Err<FoodBooking, string>('Invalid input. Please provide all required fields.');
         }
 
         // Check for duplicate food name
-        const existingBooking = foodBookingStorage
-            .values()
-            .find(
-                (booking) =>
-                    booking.foodName.toLowerCase() === payload.foodName.toLowerCase() && booking.id !== id
-            );
-
-        if (existingBooking) {
+        if (hasDuplicateFoodName(payload.foodName, id)) {
             return Result.Err<FoodBooking, string>('Food name must be unique.');
         }
 
         // Validate quantity
         const quantity = Number(payload.quantity);
-        if (isNaN(quantity) || quantity <= 0) {
+        if (!isValidQuantity(quantity)) {
             return Result.Err<FoodBooking, string>('Quantity must be a positive integer.');
         }
 
@@ -128,7 +143,7 @@ export function updateFoodBooking(id: string, payload: FoodBookingPayload): Resu
                 foodBookingStorage.insert(foodBooking.id, updatedFoodBooking);
                 return Result.Ok<FoodBooking, string>(updatedFoodBooking);
             },
-            None: () => Result.Err<FoodBooking, string>(`Couldn't update a food booking with id=${id}. Food booking not found`)
+            None: () => Result.Err<FoodBooking, string>(`Couldn't update food booking with id=${id}. Food booking not found`)
         });
     } catch (error: unknown) {
         return Result.Err<FoodBooking, string>(`Error updating food booking: ${(error as Error).message}`);
@@ -145,7 +160,7 @@ export function deleteFoodBooking(id: string): Result<FoodBooking, string> {
     try {
         return match(foodBookingStorage.remove(id), {
             Some: (deletedFoodBooking) => Result.Ok<FoodBooking, string>(deletedFoodBooking),
-            None: () => Result.Err<FoodBooking, string>(`Couldn't delete a food booking with id=${id}. Food booking not found.`)
+            None: () => Result.Err<FoodBooking, string>(`Couldn't delete food booking with id=${id}. Food booking not found.`)
         });
     } catch (error: unknown) {
         return Result.Err<FoodBooking, string>(`Error deleting food booking: ${(error as Error).message}`);
