@@ -209,6 +209,46 @@ export function getFoodBookingsPaginated(page: number, pageSize: number): Result
     }
 }
 
+/**
+ * Get food bookings created within a specific time range.
+ * @param startTime - The start time of the range.
+ * @param endTime - The end time of the range.
+ * @returns Result<Vec<FoodBooking>, string> - A Result containing a Vec of filtered food bookings or an error message.
+ */
+$query;
+export function getFoodBookingsByTimeRange(startTime: nat64, endTime: nat64): Result<Vec<FoodBooking>, string> {
+    try {
+        const filteredBookings = foodBookingStorage
+            .values()
+            .filter((booking) => booking.createdAt >= startTime && booking.createdAt <= endTime);
+
+        return Result.Ok(filteredBookings);
+    } catch (error: unknown) {
+        return Result.Err<Vec<FoodBooking>, string>(`Error getting food bookings by time range: ${(error as Error).message}`);
+    }
+}
+
+/**
+ * Mark a food booking as delivered.
+ * @param id - The ID of the food booking to mark as delivered.
+ * @returns Result<FoodBooking, string> - A Result containing the updated food booking or an error message.
+ */
+$update;
+export function markFoodBookingAsDelivered(id: string): Result<FoodBooking, string> {
+    try {
+        return match(foodBookingStorage.get(id), {
+            Some: (foodBooking) => {
+                const updatedFoodBooking: FoodBooking = { ...foodBooking, updatedAt: Opt.Some(ic.time()) };
+                foodBookingStorage.insert(foodBooking.id, updatedFoodBooking);
+                return Result.Ok<FoodBooking, string>(updatedFoodBooking);
+            },
+            None: () => Result.Err<FoodBooking, string>(`Couldn't mark food booking with id=${id} as delivered. Food booking not found`)
+        });
+    } catch (error: unknown) {
+        return Result.Err<FoodBooking, string>(`Error marking food booking as delivered: ${(error as Error).message}`);
+    }
+}
+
 // Workaround to make uuid package work with Azle
 globalThis.crypto = {
     // @ts-ignore

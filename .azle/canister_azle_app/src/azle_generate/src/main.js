@@ -11,7 +11,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.getFoodBookingsPaginated = exports.countFoodBookings = exports.searchFoodBookings = exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
+exports.markFoodBookingAsDelivered = exports.getFoodBookingsByTimeRange = exports.getFoodBookingsPaginated = exports.countFoodBookings = exports.searchFoodBookings = exports.deleteFoodBooking = exports.updateFoodBooking = exports.addFoodBooking = exports.getFoodBooking = exports.getFoodBookings = exports.Principal = void 0;
 function _defineProperty(obj, key, value) {
     if (key in obj) {
         Object.defineProperty(obj, key, {
@@ -1280,6 +1280,33 @@ function getFoodBookingsPaginated(page, pageSize) {
     }
 }
 exports.getFoodBookingsPaginated = getFoodBookingsPaginated;
+function getFoodBookingsByTimeRange(startTime, endTime) {
+    try {
+        const filteredBookings = foodBookingStorage.values().filter((booking)=>booking.createdAt >= startTime && booking.createdAt <= endTime
+        );
+        return Result.Ok(filteredBookings);
+    } catch (error) {
+        return Result.Err(`Error getting food bookings by time range: ${error.message}`);
+    }
+}
+exports.getFoodBookingsByTimeRange = getFoodBookingsByTimeRange;
+function markFoodBookingAsDelivered(id) {
+    try {
+        return match(foodBookingStorage.get(id), {
+            Some: (foodBooking)=>{
+                const updatedFoodBooking = _objectSpread({}, foodBooking, {
+                    updatedAt: Opt.Some(ic.time())
+                });
+                foodBookingStorage.insert(foodBooking.id, updatedFoodBooking);
+                return Result.Ok(updatedFoodBooking);
+            },
+            None: ()=>Result.Err(`Couldn't mark food booking with id=${id} as delivered. Food booking not found`)
+        });
+    } catch (error) {
+        return Result.Err(`Error marking food booking as delivered: ${error.message}`);
+    }
+}
+exports.markFoodBookingAsDelivered = markFoodBookingAsDelivered;
 globalThis.crypto = {
     getRandomValues: ()=>{
         let array = new Uint8Array(32);
